@@ -1,0 +1,22 @@
+### Создание товара
+POST http://127.0.0.1:8000/items
+Content-Type: application/json
+
+{
+  "name": "Тетрадь",
+  "price": 2.50
+}
+
+### Edit Item
+PUT http://127.0.0.1:8000/items/10
+Content-Type: application/json
+
+{
+  "name": "Новый товар",
+  "price": 12.99
+}
+
+### Получение товара по id
+GET http://127.0.0.1:8000/items/20
+
+###
