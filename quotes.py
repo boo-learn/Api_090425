@@ -12,8 +12,14 @@ fake_quotes = [
 
 last_id = 2
 
-class Quote(BaseModel):
+class BaseQuote(BaseModel):
     text: str
+
+class Quote(BaseQuote):
+    id: int
+
+class QuoteCreate(BaseQuote):
+    pass
 
 
 @app.get("/", status_code=status.HTTP_200_OK)
@@ -46,14 +52,15 @@ def get_quote(quote_id: int):
     )
 
 
-@app.post("/quotes", status_code=status.HTTP_201_CREATED)
-def create_quote(quote: Quote):
+@app.post("/quotes", response_model=Quote, status_code=status.HTTP_201_CREATED)  # сериализация
+# @app.post("/quotes", status_code=status.HTTP_201_CREATED)  # сериализация
+def create_quote(quote: QuoteCreate): # десериализация
     """
     Добавляет новую цитату.
     """
     global last_id
     last_id += 1
-    new_quote = {"id": last_id, "text": quote["text"].strip()}
+    new_quote = {"id": last_id, "text": quote.text.strip()}
     fake_quotes.append(new_quote)
     return new_quote
 
