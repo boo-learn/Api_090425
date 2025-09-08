@@ -6,17 +6,43 @@ app = FastAPI()
 
 # Глобальное хранилище цитат в виде списка словарей
 fake_quotes = [
-    {"id": 1, "text": "Программирование — это искусство заставлять компьютер делать то, что вы хотите."},
-    {"id": 2, "text": "Код — это стихи, написанные на языке логики."}
+    {
+        "id": 1,
+        "text": "Программирование — это искусство заставлять компьютер делать то, что вы хотите.",
+        "author": {
+            "first_name": "Иван",
+            "last_name": "Петров",
+            "birth_year": 1900,
+        }
+    },
+    {
+        "id": 2,
+        "text": "Код — это стихи, написанные на языке логики.",
+        "author": {
+            "first_name": "Николай",
+            "last_name": "Алексеев",
+            "birth_year": 1910,
+        }
+    }
 ]
 
 last_id = 2
 
+
+class Author(BaseModel):
+    first_name: str
+    last_name: str
+    birth_year: int
+
+
 class BaseQuote(BaseModel):
     text: str
+    author: Author
+
 
 class Quote(BaseQuote):
     id: int
+
 
 class QuoteCreate(BaseQuote):
     pass
@@ -30,7 +56,8 @@ def read_root():
     return {"message": "Добро пожаловать в API цитат!"}
 
 
-@app.get("/quotes")
+@app.get("/quotes", response_model=list[Quote])
+# @app.get("/quotes")
 def get_all_quotes():
     """
     Возвращает список всех цитат.
@@ -54,7 +81,7 @@ def get_quote(quote_id: int):
 
 @app.post("/quotes", response_model=Quote, status_code=status.HTTP_201_CREATED)  # сериализация
 # @app.post("/quotes", status_code=status.HTTP_201_CREATED)  # сериализация
-def create_quote(quote: QuoteCreate): # десериализация
+def create_quote(quote: QuoteCreate):  # десериализация
     """
     Добавляет новую цитату.
     """
