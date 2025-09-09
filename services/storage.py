@@ -6,10 +6,12 @@ from tmp.quotes import last_id
 quotes_db: dict[int, dict] = {
     1: {"id": 1,
         "text": "Программирование — это искусство заставлять ...",
+        "author_id": 3,
         },
     2: {
         "id": 2,
-        "text": "Код — это стихи, написанные на языке логики."
+        "text": "Код — это стихи, написанные на языке логики.",
+        "author_id": 3,
     }
 }
 last_quote_id = 2
@@ -23,11 +25,14 @@ authors_db: dict[int, dict] = {
     }
 }
 
+last_author_id = 3
+
+
 # Функции для работы с цитатами
 def create_quote(quote: dict) -> dict:
     """Создает новую цитату."""
     global last_quote_id
-    new_quote = {"id": last_quote_id +1, "text": quote["text"]}
+    new_quote = {"id": last_quote_id + 1, "text": quote["text"]}
     quotes_db[last_quote_id + 1] = new_quote
     last_quote_id += 1
     return new_quote
@@ -40,7 +45,11 @@ def get_quote_by_id(quote_id: str) -> dict | None:
 
 def get_all_quotes() -> list[dict]:
     """Возвращает список всех цитат."""
-    return list(quotes_db.values())
+    quotes = list(quotes_db.values())
+    for quote in quotes:
+        author = get_author_by_id(quote["author_id"])
+        quote["author"] = author
+    return quotes
 
 
 def get_quotes_by_author(author_id: str) -> list[dict]:
@@ -61,16 +70,21 @@ def delete_quote(quote_id: str) -> bool:
         return True
     return False
 
+
 # Функции для работы с авторами
 def create_author(author: dict) -> dict:
     """Создает нового автора."""
-    ...
-    return author
+    global last_author_id
+    new_author = author.copy()
+    new_author["id"] = last_author_id + 1
+    authors_db[last_author_id + 1] = new_author
+    last_author_id += 1
+    return new_author
 
 
-def get_author_by_id(author_id: str) -> dict | None:
+def get_author_by_id(author_id: int) -> dict | None:
     """Получает автора по ID."""
-    return ...
+    return authors_db.get(author_id)
 
 
 def get_all_authors() -> list[dict]:
@@ -91,4 +105,3 @@ def delete_author(author_id: str) -> bool:
         ...
         return True
     return False
-

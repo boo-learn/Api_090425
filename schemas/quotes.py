@@ -9,7 +9,8 @@ class BaseQuoteSchema(BaseModel):
 
 class QuoteSchema(BaseQuoteSchema):
     id: int
+    author: AuthorSchema
 
 
 class QuoteCreateSchema(BaseQuoteSchema):
-    pass
+    author_id: int
