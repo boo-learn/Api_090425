@@ -1,9 +1,8 @@
-from fastapi import FastAPI, HTTPException, status
-from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException, status
+from schemas.authors import AuthorSchema
+from schemas.quotes import QuoteSchema, QuoteCreateSchema
 
-# Инициализация приложения FastAPI
-app = FastAPI()
-
+router = APIRouter()
 # Глобальное хранилище цитат в виде списка словарей
 fake_quotes = [
     {
@@ -19,9 +18,9 @@ fake_quotes = [
         "id": 2,
         "text": "Код — это стихи, написанные на языке логики.",
         "author": {
-            "first_name": "Николай",
-            "last_name": "Алексеев",
-            "birth_year": 1910,
+            "first_name": "Иван",
+            "last_name": "Петров",
+            "birth_year": 1900,
         }
     }
 ]
@@ -29,35 +28,7 @@ fake_quotes = [
 last_id = 2
 
 
-class Author(BaseModel):
-    first_name: str
-    last_name: str
-    birth_year: int
-
-
-class BaseQuote(BaseModel):
-    text: str
-    author: Author
-
-
-class Quote(BaseQuote):
-    id: int
-
-
-class QuoteCreate(BaseQuote):
-    pass
-
-
-@app.get("/", status_code=status.HTTP_200_OK)
-def read_root():
-    """
-    Корневой путь, возвращающий приветственное сообщение.
-    """
-    return {"message": "Добро пожаловать в API цитат!"}
-
-
-@app.get("/quotes", response_model=list[Quote])
-# @app.get("/quotes")
+@router.get("/", response_model=list[QuoteSchema])
 def get_all_quotes():
     """
     Возвращает список всех цитат.
@@ -65,7 +36,7 @@ def get_all_quotes():
     return fake_quotes
 
 
-@app.get("/quotes/{quote_id}")
+@router.get("/{quote_id}")
 def get_quote(quote_id: int):
     """
     Возвращает цитату по ее уникальному идентификатору.
@@ -79,9 +50,9 @@ def get_quote(quote_id: int):
     )
 
 
-@app.post("/quotes", response_model=Quote, status_code=status.HTTP_201_CREATED)  # сериализация
+@router.post("/", response_model=QuoteSchema, status_code=status.HTTP_201_CREATED)  # сериализация
 # @app.post("/quotes", status_code=status.HTTP_201_CREATED)  # сериализация
-def create_quote(quote: QuoteCreate):  # десериализация
+def create_quote(quote: QuoteCreateSchema):  # десериализация
     """
     Добавляет новую цитату.
     """
@@ -92,8 +63,8 @@ def create_quote(quote: QuoteCreate):  # десериализация
     return new_quote
 
 
-@app.put("/quotes/{quote_id}")
-def update_quote(quote_id: int, updated_quote: Quote):
+@router.put("/{quote_id}")
+def update_quote(quote_id: int, updated_quote: QuoteSchema):
     """
     Обновляет существующую цитату.
     """
@@ -108,7 +79,7 @@ def update_quote(quote_id: int, updated_quote: Quote):
     )
 
 
-@app.delete("/quotes/{quote_id}")
+@router.delete("/{quote_id}")
 def delete_quote(quote_id: int):
     """
     Удаляет цитату по ее идентификатору.
