@@ -4,7 +4,7 @@ from schemas.authors import AuthorSchema
 
 class BaseQuoteSchema(BaseModel):
     text: str
-    author: AuthorSchema
+    # author: AuthorSchema
 
 
 class QuoteSchema(BaseQuoteSchema):

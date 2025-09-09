@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
 from schemas.authors import AuthorSchema
 from schemas.quotes import QuoteSchema, QuoteCreateSchema
+from services import storage
 
 router = APIRouter()
 # Глобальное хранилище цитат в виде списка словарей
@@ -33,7 +34,7 @@ def get_all_quotes():
     """
     Возвращает список всех цитат.
     """
-    return fake_quotes
+    return storage.get_all_quotes()
 
 
 @router.get("/{quote_id}")
@@ -41,13 +42,7 @@ def get_quote(quote_id: int):
     """
     Возвращает цитату по ее уникальному идентификатору.
     """
-    for quote in fake_quotes:
-        if quote["id"] == quote_id:
-            return quote
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail="Цитата не найдена."
-    )
+    ...
 
 
 @router.post("/", response_model=QuoteSchema, status_code=status.HTTP_201_CREATED)  # сериализация
@@ -56,10 +51,7 @@ def create_quote(quote: QuoteCreateSchema):  # десериализация
     """
     Добавляет новую цитату.
     """
-    global last_id
-    last_id += 1
-    new_quote = {"id": last_id, "text": quote.text.strip()}
-    fake_quotes.append(new_quote)
+    new_quote = storage.create_quote(quote.model_dump())
     return new_quote
 
 
@@ -68,15 +60,7 @@ def update_quote(quote_id: int, updated_quote: QuoteSchema):
     """
     Обновляет существующую цитату.
     """
-    for quote in fake_quotes:
-        if quote["id"] == quote_id:
-            quote.update(updated_quote)
-            return quote
-
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail="Цитата не найдена."
-    )
+    ...
 
 
 @router.delete("/{quote_id}")
@@ -84,12 +68,4 @@ def delete_quote(quote_id: int):
     """
     Удаляет цитату по ее идентификатору.
     """
-    for index, quote in enumerate(fake_quotes):
-        if quote["id"] == quote_id:
-            del fake_quotes[index]
-            return {"message": "Цитата успешно удалена"}
-
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail="Цитата не найдена."
-    )
+    ...
