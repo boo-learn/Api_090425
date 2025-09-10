@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class BaseAuthorSchema(BaseModel):
@@ -8,6 +8,8 @@ class BaseAuthorSchema(BaseModel):
 
 class AuthorSchema(BaseAuthorSchema):
     id: int
+
+    model_config = ConfigDict(from_attributes=True)
 
 class AuthorCreateSchema(BaseAuthorSchema):
     pass
