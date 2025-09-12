@@ -88,6 +88,12 @@ def get_author_quotes(author_id: int, session: Session = Depends(get_session)):
     """
     Возвращает все цитаты конкретного автора.
     """
+    author = session.get(Author, author_id)
+    if author is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Author with id={author_id} not found"
+        )
     stmt = select(Quote).where(Quote.author_id == author_id)
     quotes = session.scalars(stmt).all()
     return quotes

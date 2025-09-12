@@ -14,4 +14,4 @@ class Author(Base):
     first_name: Mapped[str]
     last_name: Mapped[str]
     birth_year: Mapped[int]
-    quotes: Mapped[list["Quote"]] = relationship(back_populates="author")
+    quotes: Mapped[list["Quote"]] = relationship(back_populates="author", cascade="all, delete-orphan")
