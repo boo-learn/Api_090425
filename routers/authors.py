@@ -1,8 +1,9 @@
 from fastapi import APIRouter, HTTPException, Depends, status
 from schemas.authors import AuthorSchema, AuthorCreateSchema
-from services import storage
+from schemas.quotes import QuoteSchema
 from database import get_session
 from models.authors import Author
+from models.quotes import Quote
 from sqlalchemy.orm import Session
 from sqlalchemy import select
 
@@ -80,3 +81,13 @@ def delete_author(author_id: int, session: Session = Depends(get_session)):
     session.delete(author)
     session.commit()
     return None
+
+
+@router.get("/{author_id}/quotes", response_model=list[QuoteSchema])
+def get_author_quotes(author_id: int, session: Session = Depends(get_session)):
+    """
+    Возвращает все цитаты конкретного автора.
+    """
+    stmt = select(Quote).where(Quote.author_id == author_id)
+    quotes = session.scalars(stmt).all()
+    return quotes

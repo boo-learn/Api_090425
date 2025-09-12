@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from schemas.authors import AuthorSchema
 
 
@@ -9,7 +9,10 @@ class BaseQuoteSchema(BaseModel):
 
 class QuoteSchema(BaseQuoteSchema):
     id: int
-    author: AuthorSchema
+    author_id: int
+    author: AuthorSchema | None = None
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class QuoteCreateSchema(BaseQuoteSchema):

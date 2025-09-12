@@ -1,9 +1,8 @@
-from fastapi import APIRouter, HTTPException, status, Depends
-from schemas.authors import AuthorSchema
+from fastapi import APIRouter, HTTPException, status, Depends, Query
 from schemas.quotes import QuoteSchema, QuoteCreateSchema
-from services import storage
 from database import get_session
 from sqlalchemy.orm import Session
+from sqlalchemy.orm import selectinload, noload
 from sqlalchemy import select
 from models.authors import Author
 from models.quotes import Quote
@@ -13,21 +12,34 @@ router = APIRouter()
 
 
 @router.get("/", response_model=list[QuoteSchema])
-def get_all_quotes(session: Session = Depends(get_session)):
+def get_all_quotes(
+    expand: str | None = Query(default=None, description="Например: author"),
+    session: Session = Depends(get_session),
+):
     """
     Возвращает список всех цитат.
     """
-    stmt = select(Quote)
+    if expand == "author":
+        stmt = select(Quote).options(selectinload(Quote.author))
+    else:
+        stmt = select(Quote).options(noload(Quote.author))
     quotes = session.scalars(stmt).all()
     return quotes
 
 
 @router.get("/{quote_id}", response_model=QuoteSchema)
-def get_quote(quote_id: int, session: Session = Depends(get_session)):
+def get_quote(
+    quote_id: int,
+    expand: str | None = Query(default=None, description="Например: author"),
+    session: Session = Depends(get_session),
+):
     """
     Возвращает цитату по ее уникальному идентификатору.
     """
-    quote = session.get(Quote, quote_id)
+    if expand == "author":
+        quote = session.get(Quote, quote_id, options=(selectinload(Quote.author),))
+    else:
+        quote = session.get(Quote, quote_id, options=(noload(Quote.author),))
     if quote is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
