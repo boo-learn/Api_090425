@@ -20,11 +20,11 @@ def get_all_authors(session: Session = Depends(get_session)):
 
 
 @router.get("/{author_id}", response_model=AuthorSchema)
-def get_quote(author_id: int):
+def get_author(author_id: int, session: Session = Depends(get_session)):
     """
     Возвращает автора по его уникальному идентификатору.
     """
-    author = storage.get_author_by_id(author_id)
+    author = session.get(Author, author_id)
     if author is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -34,11 +34,49 @@ def get_quote(author_id: int):
 
 
 @router.post("/", response_model=AuthorSchema, status_code=status.HTTP_201_CREATED)  # сериализация
-def create_quote(author: AuthorCreateSchema, session: Session = Depends(get_session)):
-    # new_author = storage.create_author(author.model_dump())
+def create_author(author: AuthorCreateSchema, session: Session = Depends(get_session)):
+    """
+    Создает нового автора.
+    """
     db_author = Author(**author.model_dump())
     session.add(db_author)
     session.commit()
     session.refresh(db_author)
-
     return db_author
+
+
+@router.put("/{author_id}", response_model=AuthorSchema)
+def update_author(author_id: int, author_update: AuthorCreateSchema, session: Session = Depends(get_session)):
+    """
+    Обновляет существующего автора.
+    """
+    author = session.get(Author, author_id)
+    if author is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Author with id={author_id} not found"
+        )
+    
+    for field, value in author_update.model_dump().items():
+        setattr(author, field, value)
+    
+    session.commit()
+    session.refresh(author)
+    return author
+
+
+@router.delete("/{author_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_author(author_id: int, session: Session = Depends(get_session)):
+    """
+    Удаляет автора по его идентификатору.
+    """
+    author = session.get(Author, author_id)
+    if author is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Author with id={author_id} not found"
+        )
+    
+    session.delete(author)
+    session.commit()
+    return None

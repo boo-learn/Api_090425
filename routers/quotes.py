@@ -1,71 +1,101 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from schemas.authors import AuthorSchema
 from schemas.quotes import QuoteSchema, QuoteCreateSchema
 from services import storage
+from database import get_session
+from sqlalchemy.orm import Session
+from sqlalchemy import select
+from models.authors import Author
+from models.quotes import Quote
 
 router = APIRouter()
 # Глобальное хранилище цитат в виде списка словарей
-fake_quotes = [
-    {
-        "id": 1,
-        "text": "Программирование — это искусство заставлять компьютер делать то, что вы хотите.",
-        "author": {
-            "first_name": "Иван",
-            "last_name": "Петров",
-            "birth_year": 1900,
-        }
-    },
-    {
-        "id": 2,
-        "text": "Код — это стихи, написанные на языке логики.",
-        "author": {
-            "first_name": "Иван",
-            "last_name": "Петров",
-            "birth_year": 1900,
-        }
-    }
-]
-
-last_id = 2
 
 
 @router.get("/", response_model=list[QuoteSchema])
-def get_all_quotes():
+def get_all_quotes(session: Session = Depends(get_session)):
     """
     Возвращает список всех цитат.
     """
-    return storage.get_all_quotes()
+    stmt = select(Quote)
+    quotes = session.scalars(stmt).all()
+    return quotes
 
 
-@router.get("/{quote_id}")
-def get_quote(quote_id: int):
+@router.get("/{quote_id}", response_model=QuoteSchema)
+def get_quote(quote_id: int, session: Session = Depends(get_session)):
     """
     Возвращает цитату по ее уникальному идентификатору.
     """
-    ...
+    quote = session.get(Quote, quote_id)
+    if quote is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Quote with id={quote_id} not found"
+        )
+    return quote
 
 
 @router.post("/", response_model=QuoteSchema, status_code=status.HTTP_201_CREATED)  # сериализация
 # @app.post("/quotes", status_code=status.HTTP_201_CREATED)  # сериализация
-def create_quote(quote: QuoteCreateSchema):  # десериализация
+def create_quote(
+        quote: QuoteCreateSchema,
+        session: Session = Depends(get_session)
+):  # десериализация
     """
     Добавляет новую цитату.
     """
-    new_quote = storage.create_quote(quote.model_dump())
-    return new_quote
+    author = session.get(Author, quote.author_id)
+    if author is not None:
+        new_quote = Quote(text=quote.text, author=author)
+        session.add(new_quote)
+        session.commit()
+        session.refresh(new_quote)
+        return new_quote
+        # new_quote = storage.create_quote(quote.model_dump())
 
 
-@router.put("/{quote_id}")
-def update_quote(quote_id: int, updated_quote: QuoteSchema):
+
+@router.put("/{quote_id}", response_model=QuoteSchema)
+def update_quote(quote_id: int, updated_quote: QuoteCreateSchema, session: Session = Depends(get_session)):
     """
     Обновляет существующую цитату.
     """
-    ...
+    quote = session.get(Quote, quote_id)
+    if quote is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Quote with id={quote_id} not found"
+        )
+    
+    # Проверяем, что автор существует
+    author = session.get(Author, updated_quote.author_id)
+    if author is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Author with id={updated_quote.author_id} not found"
+        )
+    
+    quote.text = updated_quote.text
+    quote.author_id = updated_quote.author_id
+    
+    session.commit()
+    session.refresh(quote)
+    return quote
 
 
-@router.delete("/{quote_id}")
-def delete_quote(quote_id: int):
+@router.delete("/{quote_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_quote(quote_id: int, session: Session = Depends(get_session)):
     """
     Удаляет цитату по ее идентификатору.
     """
-    ...
+    quote = session.get(Quote, quote_id)
+    if quote is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Quote with id={quote_id} not found"
+        )
+    
+    session.delete(quote)
+    session.commit()
+    return None
