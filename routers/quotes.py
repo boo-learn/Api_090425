@@ -12,7 +12,7 @@ router = APIRouter()
 
 
 @router.get("/", response_model=list[QuoteSchema])
-def get_all_quotes(
+async def get_all_quotes(
     expand: str | None = Query(default=None, description="Например: author"),
     session: Session = Depends(get_session),
 ):
@@ -20,10 +20,10 @@ def get_all_quotes(
     Возвращает список всех цитат.
     """
     if expand == "author":
-        stmt = select(Quote).options(selectinload(Quote.author))
+        stmt = await select(Quote).options(selectinload(Quote.author))
     else:
-        stmt = select(Quote).options(noload(Quote.author))
-    quotes = session.scalars(stmt).all()
+        stmt = await select(Quote).options(noload(Quote.author))
+    quotes = await session.scalars(stmt).all()
     return quotes
 
 
